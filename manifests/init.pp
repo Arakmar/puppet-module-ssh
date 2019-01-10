@@ -86,6 +86,7 @@ class ssh (
   $sshd_pamauthenticationviakbdint            = 'USE_DEFAULTS',
   $sshd_gssapicleanupcredentials              = 'USE_DEFAULTS',
   $sshd_acceptenv                             = 'USE_DEFAULTS',
+  $sshd_acceptenv_list                        = [],
   $sshd_config_hostkey                        = 'USE_DEFAULTS',
   $sshd_listen_address                        = undef,
   $sshd_hostbasedauthentication               = 'no',
@@ -648,6 +649,15 @@ class ssh (
     }
   }
 
+  case type3x($sshd_acceptenv_list) {
+    'array': {
+      $sshd_acceptenv_real_list = $sshd_acceptenv_list
+    }
+    default: {
+      fail('ssh::sshd_acceptenv_list type must be an array.')
+    }
+  }
+
   if $sshd_config_hostkey == 'USE_DEFAULTS' {
     $sshd_config_hostkey_real = $default_sshd_config_hostkey
   } else {
@@ -1108,6 +1118,15 @@ class ssh (
 
   if $sshd_config_allowagentforwarding != undef {
     validate_re($sshd_config_allowagentforwarding, '^(yes|no)$', "ssh::sshd_config_allowagentforwarding may be either 'yes' or 'no' and is set to <${sshd_config_allowagentforwarding}>.")
+  }
+
+  if (length($sshd_acceptenv_real_list) == 0) {
+    $sshd_acceptenv_conf = [
+      'LANG', 'LC_CTYPE', 'LC_NUMERIC', 'LC_TIME', 'LC_COLLATE',
+      'LC_MONETARY', 'LC_MESSAGES', 'LC_PAPER', 'LC_NAME', 'LC_ADDRESS',
+      'LC_TELEPHONE', 'LC_MEASUREMENT', 'LC_IDENTIFICATION', 'LC_ALL' ]
+  } else {
+    $sshd_acceptenv_conf = $sshd_acceptenv_real_list
   }
 
   package { $packages_real:
