@@ -325,7 +325,7 @@ class ssh (
           $default_service_hasstatus               = true
           $default_sshd_config_include             = undef
         }
-        /^9.*/: {
+        /^(9.*|10.*)/: {
           $default_sshd_config_hostkey = [
             '/etc/ssh/ssh_host_rsa_key',
             '/etc/ssh/ssh_host_ecdsa_key',
