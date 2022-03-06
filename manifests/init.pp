@@ -29,6 +29,7 @@ class ssh (
   $ssh_config_use_roaming                     = 'USE_DEFAULTS',
   $ssh_config_template                        = 'ssh/ssh_config.erb',
   $ssh_sendenv                                = 'USE_DEFAULTS',
+  $ssh_sendenv_list                           = [],
   $ssh_gssapiauthentication                   = 'yes',
   $ssh_gssapidelegatecredentials              = undef,
   $sshd_config_path                           = '/etc/ssh/sshd_config',
@@ -615,6 +616,15 @@ class ssh (
     $ssh_config_include_real = $ssh_config_include
   }
 
+  case type3x($ssh_sendenv_list) {
+    'array': {
+      $ssh_sendenv_real_list = $ssh_sendenv_list
+    }
+    default: {
+      fail('ssh::ssh_sendenv_list type must be an array.')
+    }
+  }
+
   if $ssh_sendenv == 'USE_DEFAULTS' {
     $ssh_sendenv_real = $default_ssh_sendenv
   } else {
@@ -1120,13 +1130,22 @@ class ssh (
     validate_re($sshd_config_allowagentforwarding, '^(yes|no)$', "ssh::sshd_config_allowagentforwarding may be either 'yes' or 'no' and is set to <${sshd_config_allowagentforwarding}>.")
   }
 
+  $default_env_variables = [
+    'LANG', 'LC_CTYPE', 'LC_NUMERIC', 'LC_TIME', 'LC_COLLATE',
+    'LC_MONETARY', 'LC_MESSAGES', 'LC_PAPER', 'LC_NAME', 'LC_ADDRESS',
+    'LC_TELEPHONE', 'LC_MEASUREMENT', 'LC_IDENTIFICATION', 'LC_ALL'
+  ]
+
   if (length($sshd_acceptenv_real_list) == 0) {
-    $sshd_acceptenv_conf = [
-      'LANG', 'LC_CTYPE', 'LC_NUMERIC', 'LC_TIME', 'LC_COLLATE',
-      'LC_MONETARY', 'LC_MESSAGES', 'LC_PAPER', 'LC_NAME', 'LC_ADDRESS',
-      'LC_TELEPHONE', 'LC_MEASUREMENT', 'LC_IDENTIFICATION', 'LC_ALL' ]
+    $sshd_acceptenv_conf = $default_env_variables
   } else {
     $sshd_acceptenv_conf = $sshd_acceptenv_real_list
+  }
+
+  if (length($ssh_sendenv_real_list) == 0) {
+    $ssh_sendenv_conf = $default_env_variables
+  } else {
+    $ssh_sendenv_conf = $ssh_sendenv_real_list
   }
 
   package { $packages_real:
